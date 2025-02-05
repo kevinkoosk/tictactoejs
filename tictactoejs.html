@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reversing Tic Tac Toe</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .status {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            aspect-ratio: 1;
+            max-width: 90vw;
+            margin: 0 auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            font-size: 4em;
+            background: white;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .cell:hover {
+            background-color: #f8f8f8;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status" id="status">Player X's Turn</div>
+        <div class="board" id="board"></div>
+        <div class="controls">
+            <button id="specialToken" onclick="useSpecialToken()">Use Special Token (3)</button>
+            <button onclick="newGame()">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        class Game {
+            constructor() {
+                this.board = Array(9).fill('');
+                this.currentPlayer = 'X';
+                this.moveHistory = [];
+                this.specialTokens = { X: 3, O: 3 };
+                this.gameOver = false;
+                this.initBoard();
+            }
+
+            initBoard() {
+                const board = document.getElementById('board');
+                board.innerHTML = '';
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('button');
+                    cell.className = 'cell';
+                    cell.addEventListener('click', () => this.makeMove(i));
+                    board.appendChild(cell);
+                }
+            }
+
+            updateDisplay() {
+                document.getElementById('status').textContent = this.gameOver 
+                    ? `Game Over - ${this.checkWin() ? `Player ${this.currentPlayer} Wins!` : "It's a Tie!"}`
+                    : `Player ${this.currentPlayer}'s Turn`;
+
+                document.querySelectorAll('.cell').forEach((cell, i) => {
+                    cell.textContent = this.board[i];
+                    cell.disabled = this.board[i] !== '' || this.gameOver;
+                });
+
+                const specialTokenBtn = document.getElementById('specialToken');
+                specialTokenBtn.textContent = `Use Special Token (${this.specialTokens[this.currentPlayer]})`;
+                specialTokenBtn.disabled = this.specialTokens[this.currentPlayer] === 0 
+                    || this.moveHistory.length < 2 
+                    || this.gameOver;
+            }
+
+            makeMove(index) {
+                if (this.board[index] === '' && !this.gameOver) {
+                    this.board[index] = this.currentPlayer;
+                    this.moveHistory.push(index);
+                    
+                    if (this.checkWin()) {
+                        this.gameOver = true;
+                    } else if (this.checkTie()) {
+                        this.gameOver = true;
+                    } else {
+                        this.currentPlayer = this.currentPlayer === 'X' ? 'O' : 'X';
+                    }
+                    this.updateDisplay();
+                }
+            }
+
+            useSpecialToken() {
+                if (this.specialTokens[this.currentPlayer] > 0 && this.moveHistory.length >= 2) {
+                    this.specialTokens[this.currentPlayer]--;
+                    
+                    // Remove last two moves
+                    this.board[this.moveHistory.pop()] = '';
+                    this.board[this.moveHistory.pop()] = '';
+                    
+                    this.updateDisplay();
+                }
+            }
+
+            checkWin() {
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+                    [0, 4, 8], [2, 4, 6] // Diagonals
+                ];
+
+                return winPatterns.some(pattern =>
+                    this.board[pattern[0]] !== '' &&
+                    this.board[pattern[0]] === this.board[pattern[1]] &&
+                    this.board[pattern[1]] === this.board[pattern[2]]
+                );
+            }
+
+            checkTie() {
+                return !this.board.includes('') && !this.checkWin();
+            }
+
+            newGame() {
+                this.board = Array(9).fill('');
+                this.currentPlayer = 'X';
+                this.moveHistory = [];
+                this.specialTokens = { X: 3, O: 3 };
+                this.gameOver = false;
+                this.updateDisplay();
+            }
+        }
+
+        const game = new Game();
+
+        function useSpecialToken() {
+            game.useSpecialToken();
+        }
+
+        function newGame() {
+            game.newGame();
+        }
+    </script>
+</body>
+</html>
